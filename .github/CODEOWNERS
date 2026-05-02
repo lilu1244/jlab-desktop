@@ -1,0 +1,3 @@
+# Default owner for everything in the repo.
+# When you push or open a PR, this user is requested for review.
+* @NeikiDev

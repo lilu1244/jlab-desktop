@@ -1,0 +1,58 @@
+# Node
+node_modules/
+dist/
+.vite/
+
+# Rust / Tauri
+src-tauri/target/
+src-tauri/gen/
+target/
+
+# Tauri bundles
+*.dmg
+*.app
+*.msi
+*.exe
+*.AppImage
+*.deb
+*.rpm
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.claude/
+
+# Env
+.env
+.env.*
+.env.local
+.env.*.local
+*.local
+
+# Signing materials (never commit)
+*.p12
+*.pfx
+*.cer
+*.crt
+*.pem
+*.keystore
+*.jks
+tauri-key
+tauri-key.pub
+*.minisign
+
+# Local fixtures / scratch
+resp.json
+resp-*.json
+scratch/
+.scratch/

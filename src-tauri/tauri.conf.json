@@ -1,0 +1,59 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "JLab Desktop",
+  "version": "0.1.2",
+  "identifier": "JLAB-Desktop",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "JLab Desktop",
+        "width": 1180,
+        "height": 780,
+        "minWidth": 760,
+        "minHeight": 540,
+        "resizable": true,
+        "fullscreen": false,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' data: asset: http://asset.localhost; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "dmg",
+      "app",
+      "msi"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "publisher": "JLab Desktop Contributors",
+    "homepage": "https://jlab.threat.rip/",
+    "copyright": "Copyright (c) 2026 JLab Desktop Contributors. MIT or Apache-2.0.",
+    "category": "DeveloperTool",
+    "shortDescription": "Static JAR scanner desktop client",
+    "longDescription": "JLab Desktop sends a JAR archive to the JLab static-scan API and renders the matched signatures. Privacy: https://jlab.threat.rip/privacy. Terms: https://jlab.threat.rip/terms.",
+    "createUpdaterArtifacts": false,
+    "macOS": {
+      "minimumSystemVersion": "10.15"
+    },
+    "windows": {
+      "wix": {
+        "language": "en-US"
+      }
+    }
+  }
+}
