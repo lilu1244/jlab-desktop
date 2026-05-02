@@ -23,7 +23,6 @@ Native desktop client for the public [JLab static JAR scanner](https://jlab.thre
 Pre-built installers are published on the GitHub Releases page on every push to `main`.
 
 - macOS (universal, Apple Silicon and Intel): `JLab.Desktop_x.y.z_universal.dmg`
-- Windows (NSIS installer): `JLab.Desktop_x.y.z_x64-setup.exe`
 - Windows (MSI): `JLab.Desktop_x.y.z_x64_en-US.msi`
 
 [Download the latest release](https://github.com/NeikiDev/jlab-desktop/releases/latest).

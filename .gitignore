@@ -54,5 +54,6 @@ tauri-key.pub
 # Local fixtures / scratch
 resp.json
 resp-*.json
+*.fixture.json
 scratch/
 .scratch/
