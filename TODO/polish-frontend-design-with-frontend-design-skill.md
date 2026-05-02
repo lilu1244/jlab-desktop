@@ -13,6 +13,6 @@ Use the `frontend-design` skill to lift the UI from "functional" to "distinctive
 - [ ] Polish `ScanProgress` (elapsed counter, phase list, rotating tip) for a calmer feel
 - [ ] Polish `SignatureList` + `SignatureCard` + `SeverityBadge` (severity grouping, density, scanability)
 - [ ] Polish `ErrorBanner` so retry stays one click away and the tone matches the rest
-- [ ] Stay inside `src/styles/app.css` tokens (no new ad-hoc durations, easings, or color literals)
+- [ ] Stay inside `src/index.css` `@theme` tokens (no new ad-hoc durations, easings, or color literals)
 - [ ] Animate only `transform` / `opacity`; verify `prefers-reduced-motion` is still honored
 - [ ] Verify `npm run check` and `cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings` are clean
