@@ -25,6 +25,7 @@ jobs:
       version: ${{ steps.read.outputs.version }}
       tag: ${{ steps.read.outputs.tag }}
       should_release: ${{ steps.gate.outputs.should_release }}
+      release_body: ${{ steps.changelog.outputs.body }}
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -69,6 +70,35 @@ jobs:
             echo "should_release=true" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Extract changelog section
+        id: changelog
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${{ steps.read.outputs.version }}"
+          body=$(awk -v v="$version" '
+            /^## \[/ {
+              if (in_block) { exit }
+              if ($0 ~ "^## \\[" v "\\]") { in_block = 1; next }
+              next
+            }
+            in_block { print }
+          ' CHANGELOG.md | sed -e ':a' -e '/./,$!d;/^$/N;/\n$/ba')
+          if [ -z "$body" ]; then
+            body="Release v$version. See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details."
+          fi
+          {
+            echo "body<<CHANGELOG_EOF"
+            echo "## JLab Desktop v$version"
+            echo
+            echo "$body"
+            echo
+            echo "---"
+            echo
+            echo "Full history: [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
+            echo "CHANGELOG_EOF"
+          } >> "$GITHUB_OUTPUT"
+
   build-macos:
     name: Build macOS (universal)
     needs: version
@@ -93,7 +123,7 @@ jobs:
           targets: aarch64-apple-darwin,x86_64-apple-darwin
 
       - name: Cache cargo
-        uses: swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84 # v2.7.3
+        uses: swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           workspaces: src-tauri
 
@@ -101,7 +131,7 @@ jobs:
         run: npm ci
 
       - name: Build and upload (macOS)
-        uses: tauri-apps/tauri-action@ecd2eff64572601ddde25cc4962c2704435736e9 # v0.5.16
+        uses: tauri-apps/tauri-action@84b9d35b5fc46c1e45415bdb6144030364f7ebc5 # v0.6.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -109,8 +139,7 @@ jobs:
         with:
           tagName: ${{ needs.version.outputs.tag }}
           releaseName: "JLab Desktop ${{ needs.version.outputs.tag }}"
-          releaseBody: |
-            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for the full notes.
+          releaseBody: ${{ needs.version.outputs.release_body }}
           releaseDraft: false
           prerelease: false
           args: --target universal-apple-darwin
@@ -138,7 +167,7 @@ jobs:
           toolchain: stable
 
       - name: Cache cargo
-        uses: swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84 # v2.7.3
+        uses: swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           workspaces: src-tauri
 
@@ -146,7 +175,7 @@ jobs:
         run: npm ci
 
       - name: Build and upload (Windows)
-        uses: tauri-apps/tauri-action@ecd2eff64572601ddde25cc4962c2704435736e9 # v0.5.16
+        uses: tauri-apps/tauri-action@84b9d35b5fc46c1e45415bdb6144030364f7ebc5 # v0.6.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -154,7 +183,6 @@ jobs:
         with:
           tagName: ${{ needs.version.outputs.tag }}
           releaseName: "JLab Desktop ${{ needs.version.outputs.tag }}"
-          releaseBody: |
-            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for the full notes.
+          releaseBody: ${{ needs.version.outputs.release_body }}
           releaseDraft: false
           prerelease: false
