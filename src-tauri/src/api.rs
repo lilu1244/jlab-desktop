@@ -183,6 +183,13 @@ fn has_zip_magic(bytes: &[u8]) -> bool {
 // largest is almost always the actual mod / payload, while the rest are
 // libraries already covered by their own signatures.
 fn extract_largest_jar(container_bytes: Vec<u8>) -> Result<(Vec<u8>, String, usize), AppError> {
+    extract_largest_jar_capped(container_bytes, MAX_BYTES)
+}
+
+fn extract_largest_jar_capped(
+    container_bytes: Vec<u8>,
+    max_bytes: u64,
+) -> Result<(Vec<u8>, String, usize), AppError> {
     let cursor = std::io::Cursor::new(container_bytes);
     let mut archive = zip::ZipArchive::new(cursor).map_err(|e| AppError::InvalidArchive {
         message: format!("could not open archive: {e}"),
@@ -208,9 +215,9 @@ fn extract_largest_jar(container_bytes: Vec<u8>) -> Result<(Vec<u8>, String, usi
     }
 
     let (idx, size) = largest.ok_or(AppError::NoJarInArchive)?;
-    if size > MAX_BYTES {
+    if size > max_bytes {
         return Err(AppError::TooLarge {
-            max_mb: MAX_BYTES / (1024 * 1024),
+            max_mb: max_bytes / (1024 * 1024),
         });
     }
 
@@ -226,10 +233,23 @@ fn extract_largest_jar(container_bytes: Vec<u8>) -> Result<(Vec<u8>, String, usi
         .unwrap_or("inner.jar")
         .to_string();
 
-    let mut buf = Vec::with_capacity(size as usize);
-    std::io::copy(&mut entry, &mut buf).map_err(|e| AppError::InvalidArchive {
-        message: format!("extract: {e}"),
-    })?;
+    // The `size` we just bounded came from the zip central directory, which
+    // a hostile container can lie about. Cap the actual read at
+    // `max_bytes + 1` and reject if we hit the cap, so a deflate bomb cannot
+    // expand into multi-GB and OOM the host (CWE-409).
+    use std::io::Read;
+    let mut buf = Vec::with_capacity(size.min(max_bytes) as usize);
+    let mut limited = (&mut entry).take(max_bytes + 1);
+    limited
+        .read_to_end(&mut buf)
+        .map_err(|e| AppError::InvalidArchive {
+            message: format!("extract: {e}"),
+        })?;
+    if buf.len() as u64 > max_bytes {
+        return Err(AppError::TooLarge {
+            max_mb: max_bytes / (1024 * 1024),
+        });
+    }
 
     Ok((buf, inner_name, jar_count))
 }
@@ -978,4 +998,55 @@ pub async fn check_status(http: State<'_, HttpClient>) -> Result<StatusInfo, App
             error: Some(e.to_string()),
         },
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::{Cursor, Write};
+    use zip::write::SimpleFileOptions;
+    use zip::{CompressionMethod, ZipWriter};
+
+    // GHSA-9m5v-g42x-xq8f: a malicious container can declare a tiny
+    // `uncompressed_size` in the central directory and then stream far more
+    // bytes when read. The pre-check passes, the read used to be unbounded,
+    // and memory exhausts. The fix caps the read at `max_bytes + 1` and
+    // rejects when the cap is hit; this test locks that in by handing in a
+    // zip whose CD lies about the inner jar's size.
+    #[test]
+    fn lying_inner_jar_size_is_rejected() {
+        // 2 KiB of zeros stored with no compression. Truth: 2048 bytes.
+        let payload = vec![0u8; 2048];
+
+        let mut bytes: Vec<u8> = Vec::new();
+        {
+            let mut zip = ZipWriter::new(Cursor::new(&mut bytes));
+            let opts = SimpleFileOptions::default().compression_method(CompressionMethod::Stored);
+            zip.start_file("inner.jar", opts).unwrap();
+            zip.write_all(&payload).unwrap();
+            zip.finish().unwrap();
+        }
+
+        // Patch the central-directory `uncompressed_size` to a small lie
+        // (10 bytes, LE u32), so the pre-check on `entry.size()` passes.
+        // The CD record signature is 0x02014b50 in little-endian.
+        let cd_sig = [0x50u8, 0x4b, 0x01, 0x02];
+        let cd_off = bytes
+            .windows(4)
+            .position(|w| w == cd_sig)
+            .expect("central-directory record present");
+        // CD layout: uncompressed_size lives at offset 24..28 from the sig.
+        let lie: u32 = 10;
+        bytes[cd_off + 24..cd_off + 28].copy_from_slice(&lie.to_le_bytes());
+
+        let max_bytes: u64 = 1024;
+        let result = extract_largest_jar_capped(bytes, max_bytes);
+
+        match result {
+            Err(AppError::TooLarge { max_mb }) => {
+                assert_eq!(max_mb, max_bytes / (1024 * 1024));
+            }
+            other => panic!("expected TooLarge, got {other:?}"),
+        }
+    }
 }
