@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-05-04
+
+### Changed
+
+- `SECURITY.md` "Signing keys" section rewritten to match reality: there is no in-app auto-updater today and no Tauri updater signing keypair in use. Updates remain manual via the GitHub Release page. The unused `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` env vars were dropped from both build jobs in `release.yml` to shrink the secret footprint in CI runners. (#8, #13)
+- Bumped `tauri-plugin-dialog` from 2.7.0 to 2.7.1 (transitively `tauri-plugin-fs` 2.5.0 → 2.5.1). (#14)
+
+### Fixed
+
+- Scan-progress tip now reads "Up to 50 MB per file. 15 scans per minute." instead of the incorrect "Five scans per minute". The new wording matches the documented JLab API rate limit. (#9, #11)
+- A corrupt `history.json` is no longer silently overwritten with an empty file on the next scan. The unparseable file is renamed to `history.json.corrupt` for inspection and a warning is written to the existing log control before the empty default is returned. Adds a regression test. (#10, #12)
+
+### Security
+
+- Inner-jar zip-bomb hardening (GHSA-9m5v-g42x-xq8f, CWE-409). `extract_largest_jar` previously trusted the central-directory `uncompressed_size` of the inner `.jar`, so a hostile `.zip` / `.mcpack` / `.mrpack` could declare a small size, pass the 50 MB pre-check, and then deflate gigabytes into a `Vec<u8>` before any HTTP call. The read is now capped with `Read::take(MAX_BYTES + 1)` and rejected when the cap is hit. Adds a regression test that builds an in-memory archive whose central directory lies about the inner jar's size.
+
 ## [0.2.0] - 2026-05-03
 
 ### Added
@@ -48,7 +64,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 The first public release. Initial macOS (universal) and Windows (MSI) builds.
 
-[Unreleased]: https://github.com/NeikiDev/jlab-desktop/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/NeikiDev/jlab-desktop/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/NeikiDev/jlab-desktop/releases/tag/v0.2.1
 [0.2.0]: https://github.com/NeikiDev/jlab-desktop/releases/tag/v0.2.0
 [0.1.1]: https://github.com/NeikiDev/jlab-desktop/releases/tag/v0.1.1
 [0.1.0]: https://github.com/NeikiDev/jlab-desktop/releases/tag/v0.1.0
