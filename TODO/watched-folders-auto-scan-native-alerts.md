@@ -21,6 +21,14 @@ Let the user opt in to watching one or more folders (typical case: `.minecraft/m
 - [ ] Fire a native notification per auto-scan result via `tauri-plugin-notification`. Title: file name. Body: top severity + counts (e.g. "1 critical, 2 high, 3 medium"). Suppress notifications for `info`-only or empty results behind a setting (default: notify on `medium` or higher).
 - [ ] Clicking the notification focuses the app window and routes to the corresponding result view. Use the existing window handle from `AppHandle`.
 - [ ] Build a `WatcherSettingsPanel.tsx` under `src/lib/components/`. Master toggle (off by default), list of watched folders with remove buttons, "Add folder" button (calls `watcher_pick_folder`), and a "Scan all now" action per folder. Empty state copy when none.
+- [ ] **First-enable warning modal.** The very first time the user flips the master toggle on (and again whenever they re-enable after a disable), show a blocking dialog before the watcher actually starts. The user must explicitly confirm. Persist a `watcher_warning_acknowledged` flag in `settings.json` so the modal only shows on the first acknowledgement, but always show it again if the user disables and re-enables. Required content:
+  - Heading like "Heads up: auto-scan is not foolproof".
+  - The static scanner catches *known* signatures only. New, repacked, or heavily obfuscated payloads can slip through, and a `clean` result is not a guarantee.
+  - Auto-scan only sees files added or modified after watching starts. Anything already in the folder is ignored unless the user clicks "Scan all now".
+  - Auto-scan is rate-limited to 12 requests / minute. Bursts get queued, not dropped, but results may be delayed.
+  - Each detection still needs human judgement: open the result, look at the matched signatures, and decide.
+  - Two action buttons: "Cancel" (leaves the toggle off) and "Enable watching" (writes the ack flag and starts the watcher).
+  - Footer link: "Questions or false positive? Join our Discord" pointing at the project Discord invite. Route the click through the existing `open_url` allowlist (extend the allowlist with the Discord invite host if not already covered, see `src-tauri/src/api.rs`).
 - [ ] Add a small badge / indicator on the idle landing in `App.tsx` when watching is active, with a click target to open the settings panel.
 - [ ] OS-aware default suggestion: when the user opens the panel for the first time, offer `~/Library/Application Support/minecraft/mods` (macOS) or `%APPDATA%\.minecraft\mods` (Windows) as a one-click add. Don't auto-add anything.
 - [ ] Tear down the watcher cleanly on app exit and on `watcher_set_enabled(false)`. No leaked threads or open handles.
