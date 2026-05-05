@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Linux desktop bundles. Releases now publish `.deb` (Debian / Ubuntu), `.rpm` (Fedora / RHEL / openSUSE), and `.AppImage` (universal) artifacts alongside the existing macOS DMG and Windows MSI. CI builds on `ubuntu-24.04` against `webkit2gtk-4.1`. README install section gained a "First run on Linux" block. Track the upstream advisories listed in `TODO/linux-builds-deb-rpm-appimage.md` (`glib` 0.18.5 and `rand` 0.7.3) on every Tauri minor bump.
+
 ## [0.2.1] - 2026-05-04
 
 ### Changed
